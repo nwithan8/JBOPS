@@ -64,6 +64,7 @@ def main():
     args = parser.parse_args()
 
     sess = requests.Session()
+    requests.packages.urllib3.disable_warnings()
     sess.verify = False
 
     plex = PlexServer(args.plex_url, args.plex_token, session=sess)
