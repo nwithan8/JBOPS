@@ -38,7 +38,7 @@ def kill_session(plex, sess_key, message):
         username = session.usernames[0]
         if session.sessionKey == sess_key:
             title = str(session.grandparentTitle + ' - ' if session.type == 'episode' else '') + session.title
-            title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
+            # title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
             session.stop(reason=message)
             print('Terminated {user}\'s stream of {title} to prioritize admin stream.'.format(user=username,
                                                                                               title=title))
