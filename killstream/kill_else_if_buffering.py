@@ -25,25 +25,14 @@ import requests
 from operator import itemgetter
 import unicodedata
 from plexapi.server import PlexServer
-
-
-# ## EDIT THESE SETTINGS ##
-PLEX_TOKEN = 'xxxx'
-PLEX_URL = 'http://localhost:32400'
+import argparse
 
 DEFAULT_REASON = 'Server Admin\'s stream takes priority and {user}(you) has {x} concurrent streams.' \
                  ' {user}\'s stream of {video} is {time}% complete. Should be finished in {comp} minutes. ' \
                  'Try again then.'
 
-ADMIN_USER = ('Admin')  # Additional usernames can be added ('Admin', 'user2')
-# ##
 
-sess = requests.Session()
-sess.verify = False
-plex = PlexServer(PLEX_URL, PLEX_TOKEN, session=sess)
-
-
-def kill_session(sess_key, message):
+def kill_session(plex, sess_key, message):
     for session in plex.sessions():
         # Check for users stream
         username = session.usernames[0]
@@ -63,13 +52,30 @@ def add_to_dictlist(d, key, val):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-url', '--plex_url', action='store',
+                        help='The URL of your Plex server.', required=True)
+    parser.add_argument('-token', '--plex_token', action='store',
+                        help='The token for your Plex server.', required=True)
+    parser.add_argument('-admins', '--admin_usernames', nargs='+',
+                        help='List of admin usernames.', required=True)
+
+    args = parser.parse_args()
+
+    sess = requests.Session()
+    sess.verify = False
+
+    plex = PlexServer(args.plex_url, args.plex_token, session=sess)
+    admins = args.admin_usernames
+
     user_dict = {}
 
     for session in plex.sessions():
         if session.transcodeSessions:
             trans_dec = session.transcodeSessions[0].videoDecision
             username = session.usernames[0]
-            if trans_dec == 'transcode' and username not in ADMIN_USER:
+            if trans_dec == 'transcode' and username not in admins:
                 sess_key = session.sessionKey
                 percent_comp = int((float(session.viewOffset) / float(session.duration)) * 100)
                 time_to_comp = old_div(old_div(int(int(session.duration) - int(session.viewOffset)), 1000), 60)
@@ -87,11 +93,11 @@ def main():
             to_kill = min(users, key=itemgetter(1))
             to_finish = max(users, key=itemgetter(1))
 
-        MESSAGE = DEFAULT_REASON.format(user=to_finish[3], x=len(filtered_dict.values()[0]),
+        message = DEFAULT_REASON.format(user=to_finish[3], x=len(filtered_dict.values()[0]),
                                         video=to_finish[2], time=to_finish[1], comp=to_finish[4])
 
-        print(MESSAGE)
-        kill_session(to_kill[0], MESSAGE)
+        print(message)
+        kill_session(plex=plex, sess_key=to_kill[0], message=message)
 
 
 if __name__ == '__main__':
