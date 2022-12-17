@@ -38,7 +38,7 @@ def kill_session(plex, sess_key, message):
         username = session.usernames[0]
         if session.sessionKey == sess_key:
             title = str(session.grandparentTitle + ' - ' if session.type == 'episode' else '') + session.title
-            title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
+            # title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
             session.stop(reason=message)
             print('Terminated {user}\'s stream of {title} to prioritize admin stream.'.format(user=username,
                                                                                               title=title))
@@ -80,7 +80,7 @@ def main():
                 percent_comp = int((float(session.viewOffset) / float(session.duration)) * 100)
                 time_to_comp = old_div(old_div(int(int(session.duration) - int(session.viewOffset)), 1000), 60)
                 title = str(session.grandparentTitle + ' - ' if session.type == 'episode' else '') + session.title
-                title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
+                # title = unicodedata.normalize('NFKD', title).encode('ascii', 'ignore').translate(None, "'")
                 add_to_dictlist(user_dict, username, [sess_key, percent_comp, title, username, time_to_comp])
 
     # Remove users with only 1 stream. Targeting users with multiple concurrent streams
